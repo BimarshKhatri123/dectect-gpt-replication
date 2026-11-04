@@ -1,0 +1,11 @@
+{
+  "pairs": "data/hc3/hc3_paired.csv",
+  "judge": "microsoft/Phi-3.5-mini-instruct",
+  "n_pairs": 200,
+  "auroc": 0.3926,
+  "accuracy_at_0_5": 0.4825,
+  "auroc_order1": 0.5333875,
+  "auroc_order2": 0.39425,
+  "frac_called_ai": 0.0325,
+  "mean_valid_mass": 0.9999999339878559
+}

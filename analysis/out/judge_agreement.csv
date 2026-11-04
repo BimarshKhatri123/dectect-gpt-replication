@@ -1,0 +1,4 @@
+dataset,judges,n,kappa_detect,qwk_quality
+hc3_paired,Phi-3.5-mini-instruct vs Qwen2.5-3B-Instruct,400,0.3020067306493831,
+persuade_paired_qwen2.5-1.5b,Phi-3.5-mini-instruct vs Qwen2.5-3B-Instruct,400,0.16013254158328127,0.7283210239278742
+persuade_paired_smollm2-1.7b,Phi-3.5-mini-instruct vs Qwen2.5-3B-Instruct,400,0.17647859524943854,0.7342878475119681

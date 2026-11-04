@@ -1,0 +1,13 @@
+run,method,human_subset,n_human,auroc
+new_persuade_qwen_scorer_gpt2xl_n200,DetectGPT-z (100),all,200,0.97765
+new_persuade_qwen_scorer_gpt2xl_n200,DetectGPT-z (100),score<=2,42,0.9964285714285714
+new_persuade_qwen_scorer_gpt2xl_n200,DetectGPT-z (100),score>=4,99,0.9738383838383838
+new_persuade_qwen_scorer_gpt2xl_n200,LogRank,all,200,0.7947
+new_persuade_qwen_scorer_gpt2xl_n200,LogRank,score<=2,42,0.9357142857142857
+new_persuade_qwen_scorer_gpt2xl_n200,LogRank,score>=4,99,0.7504040404040404
+new_persuade_qwen_scorer_gpt2xl_n200,log p(x),all,200,0.8171999999999999
+new_persuade_qwen_scorer_gpt2xl_n200,log p(x),score<=2,42,0.9581547619047619
+new_persuade_qwen_scorer_gpt2xl_n200,log p(x),score>=4,99,0.771540404040404
+new_persuade_qwen_scorer_gpt2xl_n200,RoBERTa-large,all,200,0.5124
+new_persuade_qwen_scorer_gpt2xl_n200,RoBERTa-large,score<=2,42,0.4772619047619047
+new_persuade_qwen_scorer_gpt2xl_n200,RoBERTa-large,score>=4,99,0.536969696969697

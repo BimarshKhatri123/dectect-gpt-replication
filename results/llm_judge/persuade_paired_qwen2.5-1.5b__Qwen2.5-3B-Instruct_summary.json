@@ -1,0 +1,14 @@
+{
+  "pairs": "data/new/persuade_paired_qwen2.5-1.5b.csv",
+  "judge": "Qwen/Qwen2.5-3B-Instruct",
+  "n_pairs": 200,
+  "auroc": 0.29686250000000003,
+  "accuracy_at_0_5": 0.3075,
+  "auroc_order1": 0.1606,
+  "auroc_order2": 0.4507375,
+  "frac_called_ai": 0.3575,
+  "mean_valid_mass": 1.0000000067800283,
+  "quality_mean_human": 3.7278031007386176,
+  "quality_mean_machine": 4.651568534795466,
+  "spearman_quality_vs_expert": 0.25604784537463626
+}

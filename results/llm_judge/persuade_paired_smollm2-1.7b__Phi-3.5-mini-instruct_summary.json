@@ -1,0 +1,14 @@
+{
+  "pairs": "data/new/persuade_paired_smollm2-1.7b.csv",
+  "judge": "microsoft/Phi-3.5-mini-instruct",
+  "n_pairs": 200,
+  "auroc": 0.3060125,
+  "accuracy_at_0_5": 0.435,
+  "auroc_order1": 0.2209625,
+  "auroc_order2": 0.3222625,
+  "frac_called_ai": 0.065,
+  "mean_valid_mass": 0.999999990016222,
+  "quality_mean_human": 3.5266892079840204,
+  "quality_mean_machine": 4.446477398088868,
+  "spearman_quality_vs_expert": 0.40855246023969555
+}

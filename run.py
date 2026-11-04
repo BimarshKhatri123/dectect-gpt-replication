@@ -32,7 +32,8 @@ def load_base_model():
     print('MOVING BASE MODEL TO GPU...', end='', flush=True)
     start = time.time()
     try:
-        mask_model.cpu()
+        if not args.keep_both_on_gpu:   # NEW: in half precision both models fit in 8 GB
+            mask_model.cpu()
     except NameError:
         pass
     if args.openai_model is None:
@@ -44,7 +45,7 @@ def load_mask_model():
     print('MOVING MASK MODEL TO GPU...', end='', flush=True)
     start = time.time()
 
-    if args.openai_model is None:
+    if args.openai_model is None and not args.keep_both_on_gpu:
         base_model.cpu()
     if not args.random_fills:
         mask_model.to(DEVICE)
@@ -280,9 +281,41 @@ def get_ll(text):
             return -base_model(**tokenized, labels=labels).loss.item()
 
 
+@torch.no_grad()
+def get_lls_batched(texts):
+    """NEW (speed): same quantity as get_ll() -- mean log-prob of tokens 2..T -- but for many texts
+    per forward pass. Right padding + attention mask leave every real token's context unchanged,
+    and padded positions are excluded from the mean."""
+    side = base_tokenizer.padding_side
+    base_tokenizer.padding_side = 'right'
+    out = []
+    for i in range(0, len(texts), args.ll_batch_size):
+        enc = base_tokenizer(texts[i:i + args.ll_batch_size], return_tensors="pt", padding=True).to(DEVICE)
+        logits = base_model(**enc).logits[:, :-1]
+        labels, mask = enc.input_ids[:, 1:], enc.attention_mask[:, 1:].float()
+        for b in range(logits.shape[0]):          # one row at a time keeps the fp32 softmax small
+            tok_ll = -F.cross_entropy(logits[b].float(), labels[b], reduction='none')
+            out.append(((tok_ll * mask[b]).sum() / mask[b].sum()).item())
+    base_tokenizer.padding_side = side
+    return out
+
+
+LL_CHECKED = False
+
+
 def get_lls(texts):
     if not args.openai_model:
-        return [get_ll(text) for text in texts]
+        if args.ll_batch_size <= 1:
+            return [get_ll(text) for text in texts]
+        global LL_CHECKED
+        lls = get_lls_batched(texts)
+        if not LL_CHECKED:   # one-off check that batching does not change the scores
+            ref = [get_ll(t) for t in texts[:3]]
+            diff = max(abs(a - b) for a, b in zip(ref, lls[:3]))
+            print(f"[check] batched vs per-text log-likelihood, max abs diff = {diff:.2e}", flush=True)
+            assert diff < 2e-2, "batched log-likelihoods disagree with get_ll()"
+            LL_CHECKED = True
+        return lls
     else:
         global API_TOKEN_COUNTER
 
@@ -429,13 +462,50 @@ def get_perturbation_results(span_length=10, n_perturbations=1, n_samples=500):
 
     perturb_fn = functools.partial(perturb_texts, span_length=span_length, pct=args.pct_words_masked)
 
-    p_sampled_text = perturb_fn([x for x in sampled_text for _ in range(n_perturbations)])
-    p_original_text = perturb_fn([x for x in original_text for _ in range(n_perturbations)])
-    for _ in range(n_perturbation_rounds - 1):
-        try:
-            p_sampled_text, p_original_text = perturb_fn(p_sampled_text), perturb_fn(p_original_text)
-        except AssertionError:
-            break
+    # NEW (speed + robustness): T5 perturbations depend only on the text, the mask-filling model and
+    # the masking settings -- not on the scoring model -- so they are cached PER TEXT on disk
+    # (perturbation_cache/<settings-hash>.jsonl, one line per text). A run that is interrupted
+    # resumes from the last saved block, a larger run re-uses the texts it shares with a smaller
+    # run, and re-scoring the same texts with another model needs no new perturbations.
+    if args.perturbation_cache:
+        import hashlib
+        settings = json.dumps([args.mask_filling_model_name, args.pct_words_masked, span_length, args.buffer_size,
+                               n_perturbations, n_perturbation_rounds, args.mask_top_p])
+        os.makedirs(args.perturbation_cache, exist_ok=True)
+        store = os.path.join(args.perturbation_cache, hashlib.sha1(settings.encode()).hexdigest()[:16] + ".jsonl")
+        cache = {}
+        if os.path.exists(store):
+            with open(store, encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        e = json.loads(line)
+                        cache[e["h"]] = e["p"]
+                    except (json.JSONDecodeError, KeyError):
+                        pass          # a line cut short by a crash is simply recomputed
+        th = lambda t: hashlib.sha1(t.encode()).hexdigest()
+        todo = list(dict.fromkeys(t for t in sampled_text + original_text if th(t) not in cache))
+        print(f"Perturbation cache {store}: {len(sampled_text) + len(original_text) - len(todo)} texts cached, "
+              f"{len(todo)} to perturb", flush=True)
+        per_block = max(1, (20 * args.chunk_size) // n_perturbations)
+        for i in range(0, len(todo), per_block):
+            block = todo[i:i + per_block]
+            out = perturb_fn([x for x in block for _ in range(n_perturbations)])
+            with open(store, "a", encoding="utf-8") as f:
+                for j, t in enumerate(block):
+                    p = out[j * n_perturbations:(j + 1) * n_perturbations]
+                    cache[th(t)] = p
+                    f.write(json.dumps({"h": th(t), "p": p}) + "\n")
+            print(f"  perturbed {min(i + per_block, len(todo))}/{len(todo)} texts (saved)", flush=True)
+        p_sampled_text = [p for t in sampled_text for p in cache[th(t)]]
+        p_original_text = [p for t in original_text for p in cache[th(t)]]
+    else:
+        p_sampled_text = perturb_fn([x for x in sampled_text for _ in range(n_perturbations)])
+        p_original_text = perturb_fn([x for x in original_text for _ in range(n_perturbations)])
+        for _ in range(n_perturbation_rounds - 1):
+            try:
+                p_sampled_text, p_original_text = perturb_fn(p_sampled_text), perturb_fn(p_original_text)
+            except AssertionError:
+                break
 
     assert len(p_sampled_text) == len(sampled_text) * n_perturbations, f"Expected {len(sampled_text) * n_perturbations} perturbed samples, got {len(p_sampled_text)}"
     assert len(p_original_text) == len(original_text) * n_perturbations, f"Expected {len(original_text) * n_perturbations} perturbed samples, got {len(p_original_text)}"
@@ -463,6 +533,19 @@ def get_perturbation_results(span_length=10, n_perturbations=1, n_samples=500):
         res["perturbed_original_ll_std"] = np.std(p_original_ll) if len(p_original_ll) > 1 else 1
 
     return results
+
+
+def subset_perturbations(results, k):
+    """NEW: statistics of the first k perturbations of each text (see --reuse_perturbations)."""
+    out = []
+    for r in results:
+        ps, po = r["all_perturbed_sampled_ll"][:k], r["all_perturbed_original_ll"][:k]
+        out.append(dict(r, perturbed_sampled=r["perturbed_sampled"][:k], perturbed_original=r["perturbed_original"][:k],
+                        all_perturbed_sampled_ll=ps, all_perturbed_original_ll=po,
+                        perturbed_sampled_ll=np.mean(ps), perturbed_original_ll=np.mean(po),
+                        perturbed_sampled_ll_std=np.std(ps) if len(ps) > 1 else 1,
+                        perturbed_original_ll_std=np.std(po) if len(po) > 1 else 1))
+    return out
 
 
 def run_perturbation_experiment(results, criterion, span_length=10, n_perturbations=1, n_samples=500):
@@ -621,6 +704,32 @@ def generate_samples(raw_data, batch_size):
 
 def generate_data(dataset, key):
     # load data
+    # --- NEW (COMP8240 extension): pre-paired human/machine CSVs ---------------------
+    # dataset = "paired:<path/to/file.csv>" with columns `human` and `machine`, one row per
+    # pair (built by new_data/build_hc3.py or new_data/pair_persuade.py). The machine text was
+    # NOT produced by the base model, so no sampling step is run; the base model only scores.
+    if dataset.startswith('paired:'):
+        import paired_loader
+        d = paired_loader.load_paired_csv(dataset.split(':', 1)[1])
+        ok = [i for i in range(len(d['original']))
+              if len(preproc_tokenizer([d['original'][i]])['input_ids'][0]) <= 512
+              and len(preproc_tokenizer([d['sampled'][i]])['input_ids'][0]) <= 512]
+        d = {k: [v[i] for i in ok][:n_samples] for k, v in d.items()}
+        print(f"Total number of pairs: {len(d['original'])}")
+        print(f"Average number of words: {np.mean([len(x.split()) for x in d['original']])}")
+        return d
+    # legacy loader used for the Assignment 2 run (2 Kaggle prompts, Qwen2.5-1.5B essays)
+    if dataset == 'kaggle_paired':
+        import paired_loader
+        d = paired_loader.load_paired()
+        ok = [i for i in range(len(d['original']))
+              if len(preproc_tokenizer([d['original'][i]])['input_ids'][0]) <= 512
+              and len(preproc_tokenizer([d['sampled'][i]])['input_ids'][0]) <= 512]
+        d = {k: [v[i] for i in ok][:n_samples] for k, v in d.items()}
+        print(f"Total number of pairs: {len(d['original'])}")
+        print(f"Average number of words: {np.mean([len(x.split()) for x in d['original']])}")
+        return d
+    # --- END NEW ---
     if dataset in custom_datasets.DATASETS:
         data = custom_datasets.load(dataset, cache_dir)
     else:
@@ -667,6 +776,8 @@ def load_base_model_and_tokenizer(name):
     if args.openai_model is None:
         print(f'Loading BASE model {args.base_model_name}...')
         base_model_kwargs = {}
+        if args.base_half:   # NEW: the flag existed in the original argparse but was never used
+            base_model_kwargs.update(dict(torch_dtype=torch.float16))
         if 'gpt-j' in name or 'neox' in name:
             base_model_kwargs.update(dict(torch_dtype=torch.float16))
         if 'gpt-j' in name:
@@ -689,6 +800,10 @@ def load_base_model_and_tokenizer(name):
 
 def eval_supervised(data, model):
     print(f'Beginning supervised evaluation with {model}...')
+    # NEW: park the base model on the CPU so GPT-2-XL (fp32) + RoBERTa-large fit in 8 GB of VRAM
+    if base_model is not None and not args.keep_both_on_gpu:
+        base_model.cpu()
+        torch.cuda.empty_cache()
     detector = transformers.AutoModelForSequenceClassification.from_pretrained(model, cache_dir=cache_dir).to(DEVICE)
     tokenizer = transformers.AutoTokenizer.from_pretrained(model, cache_dir=cache_dir)
 
@@ -721,6 +836,7 @@ def eval_supervised(data, model):
     # free GPU memory
     del detector
     torch.cuda.empty_cache()
+    load_base_model()  # NEW: move the base model back for the next experiment
 
     return {
         'name': model,
@@ -743,8 +859,6 @@ def eval_supervised(data, model):
 
 
 if __name__ == '__main__':
-    DEVICE = "cuda"
-
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', type=str, default="xsum")
     parser.add_argument('--dataset_key', type=str, default="document")
@@ -778,7 +892,20 @@ if __name__ == '__main__':
     parser.add_argument('--random_fills', action='store_true')
     parser.add_argument('--random_fills_tokens', action='store_true')
     parser.add_argument('--cache_dir', type=str, default="~/.cache")
+    parser.add_argument('--ll_batch_size', type=int, default=1)       # NEW: >1 scores texts in batches
+    parser.add_argument('--keep_both_on_gpu', action='store_true')      # NEW: skip CPU<->GPU swapping
+    parser.add_argument('--reuse_perturbations', action='store_true')   # NEW: smaller k = prefix of the largest k
+    parser.add_argument('--perturbation_cache', type=str, default="")   # NEW: folder for cached T5 perturbations
+    parser.add_argument('--device', type=str, default="cuda")  # NEW: "cpu" allows a smoke test without a GPU
     args = parser.parse_args()
+    DEVICE = args.device
+    # NEW: on an 8 GB card, GPT-2 XL (fp16) + T5-large (fp32) together overflow VRAM into shared system
+    # memory and perturbation becomes ~3x slower than swapping models (measured on the XSum run), so
+    # --keep_both_on_gpu is only honoured on GPUs with at least 10 GB.
+    if args.keep_both_on_gpu and torch.cuda.is_available() and torch.cuda.get_device_properties(0).total_memory < 10e9:
+        print("NOTE: --keep_both_on_gpu ignored on a GPU with < 10 GB of memory (models will be swapped)")
+        args.keep_both_on_gpu = False
+    RUN_START = time.time()  # NEW: wall-clock runtime is written to runtime.json
 
     API_TOKEN_COUNTER = 0
 
@@ -800,7 +927,10 @@ if __name__ == '__main__':
     else:
         base_model_name = "openai-" + args.openai_model.replace('/', '_')
     scoring_model_string = (f"-{args.scoring_model_name}" if args.scoring_model_name else "").replace('/', '_')
-    SAVE_FOLDER = f"tmp_results/{output_subfolder}{base_model_name}{scoring_model_string}-{args.mask_filling_model_name}-{sampling_string}/{START_DATE}-{START_TIME}-{precision_string}-{args.pct_words_masked}-{args.n_perturbation_rounds}-{args.dataset}-{args.n_samples}"
+    # NEW: "paired:data/x/y.csv" is not a valid folder name on Windows -> use the file stem
+    dataset_tag = os.path.splitext(os.path.basename(args.dataset.split(':', 1)[1]))[0] if args.dataset.startswith('paired:') else args.dataset
+    mask_tag = args.mask_filling_model_name.replace('/', '_')
+    SAVE_FOLDER = f"tmp_results/{output_subfolder}{base_model_name}{scoring_model_string}-{mask_tag}-{sampling_string}/{START_DATE}-{START_TIME}-{precision_string}-{args.pct_words_masked}-{args.n_perturbation_rounds}-{dataset_tag}-{args.n_samples}"
     if not os.path.exists(SAVE_FOLDER):
         os.makedirs(SAVE_FOLDER)
     print(f"Saving results to absolute path: {os.path.abspath(SAVE_FOLDER)}")
@@ -827,6 +957,10 @@ if __name__ == '__main__':
     # generic generative model
     base_model, base_tokenizer = load_base_model_and_tokenizer(args.base_model_name)
 
+    # NEW: put the base model on the GPU straight away, so that only ONE large model is ever
+    # held in CPU RAM (GPT-2-XL fp32 6.4 GB + T5-3B bf16 5.7 GB do not both fit in 16 GB RAM)
+    load_base_model()
+
     # mask filling t5 model
     if not args.baselines_only and not args.random_fills:
         int8_kwargs = {}
@@ -836,7 +970,8 @@ if __name__ == '__main__':
         elif args.half:
             half_kwargs = dict(torch_dtype=torch.bfloat16)
         print(f'Loading mask filling model {mask_filling_model_name}...')
-        mask_model = transformers.AutoModelForSeq2SeqLM.from_pretrained(mask_filling_model_name, **int8_kwargs, **half_kwargs, cache_dir=cache_dir)
+        mask_model = transformers.AutoModelForSeq2SeqLM.from_pretrained(mask_filling_model_name, **int8_kwargs, **half_kwargs, cache_dir=cache_dir,
+                                                                        low_cpu_mem_usage=True)  # NEW: avoid a 2x RAM peak while loading
         try:
             n_positions = mask_model.config.n_positions
         except AttributeError:
@@ -889,14 +1024,26 @@ if __name__ == '__main__':
 
     if not args.baselines_only:
         # run perturbation experiments
+        # NEW (speed): with --reuse_perturbations the largest k is computed once and every smaller k
+        # uses the first k of those perturbations (still k independent samples per text), instead
+        # of drawing a fresh set for each k.
+        if args.reuse_perturbations:
+            full_results = get_perturbation_results(args.span_length, max(n_perturbation_list), n_samples)
         for n_perturbations in n_perturbation_list:
-            perturbation_results = get_perturbation_results(args.span_length, n_perturbations, n_samples)
+            if args.reuse_perturbations:
+                perturbation_results = subset_perturbations(full_results, n_perturbations)
+            else:
+                perturbation_results = get_perturbation_results(args.span_length, n_perturbations, n_samples)
             for perturbation_mode in ['d', 'z']:
                 output = run_perturbation_experiment(
                     perturbation_results, perturbation_mode, span_length=args.span_length, n_perturbations=n_perturbations, n_samples=n_samples)
                 outputs.append(output)
+                # NEW: keep every log-likelihood but drop the perturbed texts themselves from the saved
+                # file (they would make each file ~30 MB; they remain in --perturbation_cache)
+                slim = dict(output, raw_results=[{k: v for k, v in r.items() if k not in ("perturbed_sampled", "perturbed_original")}
+                                                 for r in output["raw_results"]])
                 with open(os.path.join(SAVE_FOLDER, f"perturbation_{n_perturbations}_{perturbation_mode}_results.json"), "w") as f:
-                    json.dump(output, f)
+                    json.dump(slim, f)
 
     if not args.skip_baselines:
         # write likelihood threshold results to a file
@@ -929,6 +1076,11 @@ if __name__ == '__main__':
     save_roc_curves(outputs)
     save_ll_histograms(outputs)
     save_llr_histograms(outputs)
+
+    # NEW: record wall-clock runtime so compute cost can be reported
+    with open(os.path.join(SAVE_FOLDER, "runtime.json"), "w") as f:
+        json.dump({"seconds": time.time() - RUN_START,
+                   "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu"}, f)
 
     # move results folder from tmp_results/ to results/, making sure necessary directories exist
     new_folder = SAVE_FOLDER.replace("tmp_results", "results")

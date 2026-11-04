@@ -1,10 +1,10 @@
 import random
 import datasets
-
+import pandas as pd
 SEPARATOR = '<<<SEP>>>'
 
 
-DATASETS = ['writing', 'english', 'german', 'pubmed']
+DATASETS = ['writing', 'english', 'german', 'pubmed','kaggle']
 
 
 def load_pubmed(cache_dir):
@@ -47,9 +47,9 @@ def process_spaces(story):
 def load_writing(cache_dir=None):
     writing_path = 'data/writingPrompts'
     
-    with open(f'{writing_path}/valid.wp_source', 'r') as f:
+    with open(f'{writing_path}/valid.wp_source', 'r', encoding='utf-8') as f:
         prompts = f.readlines()
-    with open(f'{writing_path}/valid.wp_target', 'r') as f:
+    with open(f'{writing_path}/valid.wp_target', 'r', encoding='utf-8') as f:
         stories = f.readlines()
     
     prompts = [process_prompt(prompt) for prompt in prompts]
@@ -80,7 +80,20 @@ def load_german(cache_dir):
 def load_english(cache_dir):
     return load_language('en', cache_dir)
 
-
+def load_kaggle(cache_dir=None, path='data/kaggle/train_essays.csv', max_words=250, prompt_id=None):
+    """Human-written student essays from the Kaggle 'LLM - Detect AI Generated Text' training file.
+    Keeps generated == 0 only (the 3 LLM essays are too few to use), cuts each essay to its first
+    `max_words` words so it fits the 512-token limit of the T5 mask-filling model, and optionally
+    keeps a single prompt (0 = Car-free cities, 1 = Does the electoral college work?)."""
+    df = pd.read_csv(path)
+    df = df[df['generated'] == 0]
+    if prompt_id is not None:
+        df = df[df['prompt_id'] == prompt_id]
+    essays = [' '.join(t.split()[:max_words]) for t in df['text']]
+    random.seed(0)
+    random.shuffle(essays)
+    return essays
+ 
 def load(name, cache_dir, **kwargs):
     if name in DATASETS:
         load_fn = globals()[f'load_{name}']

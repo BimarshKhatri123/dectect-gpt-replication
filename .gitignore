@@ -1,0 +1,34 @@
+env/
+__pycache__/
+tmp_results/
+perturbation_cache/
+logs/*.log
+_handoff/
+_broken_copies/
+results/smoke/
+results/bench/
+# data that may not be redistributed or is downloaded separately
+data/writingPrompts/
+data/persuade/persuade_corpus_2.0_train.csv
+data/persuade/persuade_corpus_2.0-main*/
+data/persuade/_tmp/
+# LaTeX build files
+report/*.aux
+report/*.log
+report/*.out
+report/*.blg
+report/*.fls
+report/*.fdb_latexmk
+# Kaggle LLM-Detect essays may not be redistributed (competition rules): keep our generated
+# essays and the run summaries, but not the result files that embed the students' text
+data/kaggle/*
+!data/kaggle/machine_essays.csv
+!data/kaggle/machine_essays_raw.csv
+results/kaggle_*/**/*.json
+results/paired_test/**/*.json
+results/final/new_kaggle*/**/*.json
+!results/**/args.json
+!results/**/runtime.json
+# Assignment 1-2 console logs (UTF-16)
+kaggle_100_log.txt
+pubmed_log.txt

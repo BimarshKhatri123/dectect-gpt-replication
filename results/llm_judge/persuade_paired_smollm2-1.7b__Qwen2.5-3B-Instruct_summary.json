@@ -1,0 +1,14 @@
+{
+  "pairs": "data/new/persuade_paired_smollm2-1.7b.csv",
+  "judge": "Qwen/Qwen2.5-3B-Instruct",
+  "n_pairs": 200,
+  "auroc": 0.3597,
+  "accuracy_at_0_5": 0.3725,
+  "auroc_order1": 0.2093125,
+  "auroc_order2": 0.5314625000000001,
+  "frac_called_ai": 0.3475,
+  "mean_valid_mass": 0.9999999988824129,
+  "quality_mean_human": 3.656474147907851,
+  "quality_mean_machine": 4.4972010314211595,
+  "spearman_quality_vs_expert": 0.4699576373761261
+}

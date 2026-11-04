@@ -1,0 +1,14 @@
+{
+  "pairs": "data/new/persuade_paired_qwen2.5-1.5b.csv",
+  "judge": "microsoft/Phi-3.5-mini-instruct",
+  "n_pairs": 200,
+  "auroc": 0.32672500000000004,
+  "accuracy_at_0_5": 0.4175,
+  "auroc_order1": 0.26320000000000005,
+  "auroc_order2": 0.35155000000000003,
+  "frac_called_ai": 0.0825,
+  "mean_valid_mass": 0.9999999933689833,
+  "quality_mean_human": 3.584375654850371,
+  "quality_mean_machine": 4.737751148175749,
+  "spearman_quality_vs_expert": 0.3198696096640333
+}
