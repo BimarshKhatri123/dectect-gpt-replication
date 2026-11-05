@@ -166,5 +166,59 @@
     "returncode": 0,
     "minutes": 4.4,
     "finished": "2026-11-04 17:29"
+  },
+  "new_hc3_scorer_gpt2xl_n200": {
+    "ok": true,
+    "returncode": 0,
+    "minutes": 378.7,
+    "finished": "2026-11-04 23:48"
+  },
+  "rep_writing_n200": {
+    "ok": true,
+    "returncode": 0,
+    "minutes": 91.9,
+    "finished": "2026-11-05 01:19"
+  },
+  "new_kaggle_gpt2xl_n200": {
+    "ok": true,
+    "returncode": 0,
+    "minutes": 121.2,
+    "finished": "2026-11-05 03:21"
+  },
+  "rep_pubmed_n200": {
+    "ok": true,
+    "returncode": 0,
+    "minutes": 251.9,
+    "finished": "2026-11-05 07:33"
+  },
+  "new_persuade_smol_scorer_gpt2xl_n200": {
+    "ok": true,
+    "returncode": 0,
+    "minutes": 176.3,
+    "finished": "2026-11-05 10:29"
+  },
+  "install_wmt_deps": {
+    "ok": true,
+    "returncode": 0,
+    "minutes": 0.3,
+    "finished": "2026-11-05 10:29"
+  },
+  "prefetch_wmt": {
+    "ok": true,
+    "returncode": 0,
+    "minutes": 3.9,
+    "finished": "2026-11-05 10:33"
+  },
+  "rep_english_n200": {
+    "ok": true,
+    "returncode": 0,
+    "minutes": 142.6,
+    "finished": "2026-11-05 12:56"
+  },
+  "rep_german_n200": {
+    "ok": true,
+    "returncode": 0,
+    "minutes": 148.3,
+    "finished": "2026-11-05 15:24"
   }
 }
