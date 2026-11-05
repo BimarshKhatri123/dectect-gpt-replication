@@ -24,7 +24,7 @@
 \maketitle
 
 \begin{abstract}
-DetectGPT \citep{mitchell2023detectgpt} flags a passage as machine-written when small rewrites of it consistently lower a language model's log-probability. We replicate the method with the authors' code on the original datasets, using the paper's GPT-2 XL configuration on a single 8\,GB laptop GPU, and show which settings explain the gap between our earlier pilot runs and the published numbers. We then test the method on student writing: two existing datasets (Kaggle LLM-Detect and HC3) and a new dataset of 600 student/LLM essay pairs built from the PERSUADE 2.0 corpus with two open instruction-tuned generators. Finally we compare DetectGPT with two LLM judges. On XSum and SQuAD DetectGPT reaches AUROC 0.96, close to the paper's 0.99 and above every zero-shot baseline. On the new essays it reaches 0.98 while the supervised RoBERTa detector falls to chance, and, unlike the likelihood baselines, it does not depend on the human essays being poorly written. \todo{judge headline}
+DetectGPT \citep{mitchell2023detectgpt} flags a passage as machine-written when small rewrites of it consistently lower a language model's log-probability. We replicate the method with the authors' code on the original datasets, using the paper's GPT-2 XL configuration on a single 8\,GB laptop GPU, and show which settings explain the gap between our earlier pilot runs and the published numbers. We then test the method on student writing: two existing datasets (Kaggle LLM-Detect and HC3) and a new dataset of 600 student/LLM essay pairs built from the PERSUADE 2.0 corpus with two open instruction-tuned generators. Finally we compare DetectGPT with two LLM judges. Across all six original datasets the baselines match the published values closely, and DetectGPT reaches AUROC 0.87--0.97 (paper 0.84--0.99), ahead of every zero-shot baseline on four of them; the remaining gap follows from the smaller mask filler we could run. On the new essays it reaches 0.98 while the supervised RoBERTa detector falls to chance, and, unlike the likelihood baselines, it does not depend on the human essays being poorly written. Small LLM judges, by contrast, detect worse than chance, although they are consistent raters of essay quality.
 \end{abstract}
 
 %=====================================================================
@@ -46,7 +46,7 @@ where $q$ masks 2-word spans covering 15\% of the words and refills them with T5
 
 \paragraph{Reported results.} In the paper's Table~1 (500 pairs per dataset) DetectGPT is the best zero-shot method in 14 of 15 dataset/model combinations, averaging AUROC 0.97 on XSum, 0.92 on SQuAD and 0.97 on WritingPrompts. For the GPT-2 (1.5B) source model, the column we replicate, it scores 0.99 on all three datasets, against 0.89/0.94/0.98 for LogRank, the strongest baseline. The supervised detectors match DetectGPT on news-like text but drop sharply under domain shift (PubMedQA, German WMT16).
 
-\paragraph{Justification.} The paper was published at ICML 2023, which CORE ranks A* and which is among the highest-ranked AI venues by Google Scholar h5-index, and it has been cited over \todo{N} times (Google Scholar, November 2026). It became the reference point for zero-shot detection, with direct successors such as Fast-DetectGPT \citep{bao2024fast} and Binoculars \citep{hans2024binoculars}. It is also well suited to replication: code, run scripts and datasets are public, and with no training step any difference in results can be traced to a few settings (scoring model, mask-filling model, number of perturbations). Finally, the paper never tests student writing, which is the setting where detectors are actually used.
+\paragraph{Justification.} The paper was published at ICML 2023, which CORE ranks A* and which is among the highest-ranked venues in Google Scholar's Artificial Intelligence category by h5-index. It is also highly cited and has become the standard zero-shot baseline for machine-generated text detection, with direct successors such as Fast-DetectGPT \citep{bao2024fast} and Binoculars \citep{hans2024binoculars}. It is also well suited to replication: code, run scripts and datasets are public, and with no training step any difference in results can be traced to a few settings (scoring model, mask-filling model, number of perturbations). Finally, the paper never tests student writing, which is the setting where detectors are actually used.
 
 %=====================================================================
 \section{The Original Datasets}
@@ -59,18 +59,18 @@ The paper uses \textbf{six datasets from five sources} (WMT16 contributes an Eng
 \item \textbf{PubMedQA}\footnote{\url{https://huggingface.co/datasets/qiaojin/PubMedQA}} \citep{jin2019pubmedqa}: 1{,}000 expert-labelled biomedical questions (\texttt{pqa\_labeled}); the human text is ``\texttt{Question: q Answer: a}'' and the model is prompted with the question only.
 \item \textbf{WMT16 English} and \textbf{German}\footnote{\url{https://huggingface.co/datasets/wmt16}} \citep{bojar2016wmt}: one side of the de--en news translation corpus, keeping documents of 100--150 words.
 \end{itemize}
-XSum, SQuAD and WritingPrompts form the main comparison (paper Table~1); PubMedQA and WMT16 test domain and language shift (paper Fig.~4 and Table~2). The code removes duplicates and newlines, keeps passages over 250 words for the first three datasets, and drops anything longer than 512 T5 tokens. Figure~\ref{fig:snippets} shows an XSum pair.
+XSum, SQuAD and WritingPrompts form the main comparison (paper Table~1); PubMedQA and WMT16 test domain and language shift (paper Fig.~4 and Table~2). The code removes duplicates and newlines, keeps passages over 250 words for the first three datasets, and drops anything longer than 512 T5 tokens. Figure~\ref{fig:snippets} shows an XSum pair alongside pairs from our new data.
 
 \begin{figure}[t]
 \small
 \begin{tcolorbox}[colback=gray!5,colframe=gray!50,boxsep=1pt,left=2pt,right=2pt,top=1pt,bottom=1pt]
-\textbf{XSum, human:} \todo{xsum human snippet}\\[3pt]
-\textbf{XSum, GPT-2 XL from the first 30 tokens:} \todo{xsum machine snippet}\\[3pt]
-\hrule\vspace{3pt}
-\textbf{New data, student (score 2/6):} \emph{``Advantages of limiting car ussage is if citizens limit their car usage there will be cut on greenhouse gas emissions, lower stress levels, and improve safety. Limiting car ussage will help reduces greenhouse gases\ldots''}\\[3pt]
-\textbf{New data, Qwen2.5-1.5B, same prompt:} \emph{``Limiting car usage offers numerous advantages that go beyond reducing carbon footprints. By encouraging alternatives like biking, walking, or public transit, societies can significantly decrease congestion\ldots''}
+\textbf{Original data: XSum.} \emph{Human:} ``Palmer expects to be fined by the British Horseracing Authority (BHA) for the rule breach during Champions Day. `It was an oversight,' Palmer told BBC Sport\ldots'' \emph{GPT-2 XL, continuing the first 30 tokens:} ``\ldots during Champions Day. `It was an honest mistake,' he said. `I am being fined by the BHA for accepting a car at the race track\ldots'' ''\\[2pt]
+\hrule\vspace{2pt}
+\textbf{Existing new data: HC3 (wiki\_csai), ``Please explain what is `Fair use'.''} \emph{Human:} ``Fair use is a doctrine in United States law that permits limited use of copyrighted material without having to first acquire permission\ldots'' \emph{ChatGPT:} ``Fair use is a doctrine in the United States copyright law that allows for the limited use of copyrighted material without obtaining permission\ldots''\\[2pt]
+\hrule\vspace{2pt}
+\textbf{Constructed data: PERSUADE, ``Car-free cities''.} \emph{Student (expert score 2/6):} ``Advantages of limiting car ussage is if citizens limit their car usage there will be cut on greenhouse gas emissions, lower stress levels, and improve safety\ldots'' \emph{Qwen2.5-1.5B, same assignment:} ``Limiting car usage offers numerous advantages that go beyond reducing carbon footprints. By encouraging alternatives like biking, walking, or public transit\ldots''
 \end{tcolorbox}
-\caption{Opening words of a human/machine pair from the original XSum data and from our new PERSUADE-based dataset (``Car-free cities'' prompt).}
+\caption{Opening words of human/machine pairs from an original dataset (XSum), an existing new dataset (HC3) and our constructed dataset (PERSUADE). In XSum the machine text continues the human prefix; in HC3 and PERSUADE both sides answer the same question or assignment independently.}
 \label{fig:snippets}
 \end{figure}
 
@@ -79,7 +79,7 @@ XSum, SQuAD and WritingPrompts form the main comparison (paper Table~1); PubMedQ
 \label{sec:replication}
 \paragraph{Environment.} We ran the authors' repository\footnote{\url{https://github.com/eric-mitchell/detect-gpt}} on a Windows~11 laptop with an RTX~4060 Laptop GPU (8\,GB), 16\,GB RAM, Python~3.10, PyTorch~2.13 (CUDA~12.6), Transformers~4.44.2 and Datasets~2.14.7. Getting it to run needed a few fixes, all marked \texttt{NEW} in \texttt{run.py}: WritingPrompts must be read as UTF-8 (Windows defaults to cp1252 and crashes), result folder names must not contain ``\texttt{:}'', and a Hugging Face cache copied between folders silently broke its symbolic links (tokenizer files became 52-byte text stubs). Every run is launched by \texttt{experiments/run\_suite.py}, which logs the exact command line and run time; all scripts used for the replication, with our changes to the original code marked, are in our public repository.\footnote{\url{https://github.com/BimarshKhatri123/dectect-gpt-replication} (replication: \texttt{run.py}, \texttt{experiments/}; setup: \texttt{README.md}, \texttt{requirements.txt}).}
 
-\paragraph{Configuration.} We replicate the GPT-2 column of the paper's Table~1: GPT-2 XL (1.5B) as source and scoring model, 2-word spans and \texttt{pct\_words\_masked}=0.3 (the code masks $0.3\times\frac{2}{2+2}=15\%$ of words once the one-word buffer around each span is counted, matching the paper), and $k\in\{1,10,100\}$. Two departures were forced by the hardware. (i) The paper fills masks with T5-3B; on our 8\,GB GPU T5-3B spilled into system RAM and took about 9\,s per perturbed text, so a run would take days. We use T5-large, the mask filler the paper itself uses for its perturbation-count study (Fig.~8). (ii) We use $n=200$ pairs instead of 500 and report 95\% bootstrap confidence intervals. (iii) For WMT16 English and German the authors' script uses the multilingual mGPT (1.3B) scoring model with an mT5-XL (3.7B) mask filler; we keep mGPT and use mT5-large (1.2B), the same kind of substitution as T5-large for T5-3B. To fit the budget we also added speed options that leave the method unchanged: GPT-2 XL runs in fp16, perturbed texts are scored in batches of 8 (checked at run time against one-at-a-time scores; maximum difference $8\times10^{-4}$), the $k=1$ and $k=10$ estimates reuse the first $k$ of the 100 perturbations, and perturbations are cached per text so an interrupted run resumes. A 200-pair run on new texts takes about 3.4\,h.
+\paragraph{Configuration.} We replicate the GPT-2 column of the paper's Table~1: GPT-2 XL (1.5B) as source and scoring model, 2-word spans and \texttt{pct\_words\_masked}=0.3 (the code masks $0.3\times\frac{2}{2+2}=15\%$ of words once the one-word buffer around each span is counted, matching the paper), and $k\in\{1,10,100\}$. Three departures were forced by the hardware. (i) The paper fills masks with T5-3B; on our 8\,GB GPU T5-3B spilled into system RAM and took about 9\,s per perturbed text, so a run would take days. We use T5-large, the mask filler the paper itself uses for its perturbation-count study (Fig.~8). (ii) We use $n=200$ pairs instead of 500 and report 95\% bootstrap confidence intervals. (iii) For WMT16 English and German the authors' script uses the multilingual mGPT (1.3B) scoring model with an mT5-XL (3.7B) mask filler; we keep mGPT and use mT5-large (1.2B), the same kind of substitution as T5-large for T5-3B. To fit the budget we also added speed options that leave the method unchanged: GPT-2 XL runs in fp16, perturbed texts are scored in batches of 8 (checked at run time against one-at-a-time scores; maximum difference $8\times10^{-4}$), the $k=1$ and $k=10$ estimates reuse the first $k$ of the 100 perturbations, and perturbations are cached per text so an interrupted run resumes. A 200-pair run on new texts took 1.5--4\,h.
 
 \begin{table}[t]
 \centering\small
@@ -89,32 +89,49 @@ XSum, SQuAD and WritingPrompts form the main comparison (paper Table~1); PubMedQ
  & \multicolumn{2}{c}{XSum} & \multicolumn{2}{c}{SQuAD} & \multicolumn{2}{c}{WritingPr.} \\
 Method & ours & paper & ours & paper & ours & paper \\
 \midrule
-$\log p(x)$ & 0.89 & 0.86 & 0.90 & 0.91 & \todo{} & 0.97 \\
-Rank        & 0.80 & 0.79 & 0.84 & 0.83 & \todo{} & 0.87 \\
-LogRank     & 0.91 & 0.89 & 0.94 & 0.94 & \todo{} & 0.98 \\
-Entropy     & 0.55 & 0.60 & 0.59 & 0.58 & \todo{} & 0.37 \\
-DetectGPT   & \textbf{0.96} & \textbf{0.99} & \textbf{0.95} & \textbf{0.99} & \todo{} & \textbf{0.99} \\
-\quad 95\% CI & \multicolumn{2}{l}{[.94, .98]} & \multicolumn{2}{l}{[.93, .97]} & \multicolumn{2}{l}{[\todo{}]}\\
+$\log p(x)$ & 0.89 & 0.86 & 0.90 & 0.91 & 0.97 & 0.97 \\
+Rank        & 0.80 & 0.79 & 0.84 & 0.83 & 0.89 & 0.87 \\
+LogRank     & 0.91 & 0.89 & 0.94 & 0.94 & 0.98 & 0.98 \\
+Entropy     & 0.55 & 0.60 & 0.59 & 0.58 & 0.37 & 0.37 \\
+DetectGPT   & \textbf{0.96} & \textbf{0.99} & \textbf{0.95} & \textbf{0.99} & \textbf{0.97} & \textbf{0.99} \\
+\quad 95\% CI & \multicolumn{2}{l}{[.94, .98]} & \multicolumn{2}{l}{[.93, .97]} & \multicolumn{2}{l}{[.95, .98]}\\
 \midrule
-RoBERTa-base  & 0.98 & -- & 0.96 & -- & \todo{} & -- \\
-RoBERTa-large & 1.00 & -- & 0.99 & -- & \todo{} & -- \\
+RoBERTa-base  & 0.98 & -- & 0.96 & -- & 0.97 & -- \\
+RoBERTa-large & 1.00 & -- & 0.99 & -- & 0.99 & -- \\
 \bottomrule
 \end{tabular}
 \caption{Replication of the GPT-2 column of Table~1 in \citet{mitchell2023detectgpt}: AUROC, GPT-2 XL source/scoring model, $k=100$, $n=200$ (paper: $n=500$, T5-3B). DetectGPT is the z-normalised variant.}
 \label{tab:replication}
 \end{table}
 
-\paragraph{Results.} Table~\ref{tab:replication} compares our numbers with the paper. \todo{final sentence per dataset}. On XSum DetectGPT reaches 0.961 (the unnormalised $d$ variant 0.954), above the best zero-shot baseline LogRank (0.912), so the paper's main claim reproduces: DetectGPT beats every statistic computed from the same model. The baselines themselves match the paper closely: $\log p(x)$ 0.89 vs 0.86, LogRank 0.91 vs 0.89, Entropy 0.55 vs 0.60. The 100-pair run gave 0.965, so the estimate is stable in $n$. SQuAD gives the same picture: DetectGPT 0.952 [0.931, 0.969] against LogRank 0.938, with every baseline within 0.01 of the paper. \todo{WP/PubMed/WMT sentence}. As in the paper, the supervised RoBERTa detectors do very well on GPT-2 news text, which is the domain they were trained on.
+\begin{table}[t]
+\centering\small
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{lccc}
+\toprule
+ & PubMedQA & WMT16-en & WMT16-de \\
+\midrule
+LogRank (ours)        & 0.78 & 0.91 & 0.94 \\
+RoBERTa-base (ours)   & 0.79 & 0.55 & 0.50 \\
+\quad paper (Fig.~4)  & 0.60 & -- & 0.39 \\
+DetectGPT (ours)      & \textbf{0.87} & \textbf{0.97} & \textbf{0.94} \\
+\quad paper (Fig.~4)  & 0.84 & -- & 0.96 \\
+\bottomrule
+\end{tabular}
+\caption{Domain-shift datasets ($n=200$, $k=100$). PubMedQA: GPT-2 XL + T5-large; WMT16: mGPT + mT5-large (paper: mT5-XL). Paper values are from Fig.~4 where reported.}
+\label{tab:shift}
+\end{table}
 
-\paragraph{How close, and why not closer.} DetectGPT lands about 0.02--0.03 below the paper on every dataset, while the baselines, which use no perturbations, match the paper to within about 0.03 in either direction. The gap is therefore in the perturbation step, and the evidence points to the smaller mask-filling model. (i) The paper's Fig.~7 shows AUROC rising with mask-filler size, and our ablation (Fig.~\ref{fig:pert}, bottom) shows the same trend from T5-small to T5-large. \todo{ablation numbers}. (ii) The number of perturbations matters a lot: on XSum AUROC rises from 0.77 ($k=1$) to 0.89 ($k=10$) and 0.96 ($k=100$), the same shape as the paper's Fig.~8. This also explains our pilot runs (Assignments 1--2), which used T5-small and $k=10$ and found DetectGPT \emph{below} LogRank on PubMedQA (0.79 vs 0.86); with the paper's settings the order is restored. (iii) With $n=200$ the 95\% intervals are about $\pm0.02$, so part of the remaining gap is sampling noise. We found no sign of an error in the original work; the shortfall is what the paper's own ablations predict for a smaller mask filler.
+\paragraph{Results.} Table~\ref{tab:replication} compares our numbers with the paper. On XSum DetectGPT reaches 0.961 (the unnormalised $d$ variant 0.954), above the best zero-shot baseline LogRank (0.912), so the paper's main claim reproduces: DetectGPT beats every statistic computed from the same model. The baselines themselves match the paper closely: $\log p(x)$ 0.89 vs 0.86, LogRank 0.91 vs 0.89, Entropy 0.55 vs 0.60. The 100-pair run gave 0.965, so the estimate is stable in $n$. SQuAD gives the same picture: DetectGPT 0.952 [0.931, 0.969] against LogRank 0.938, with every baseline within 0.01 of the paper. WritingPrompts is the one dataset where the order of DetectGPT and LogRank does not reproduce: DetectGPT reaches 0.968 [0.951, 0.982] and LogRank 0.979 [0.965, 0.989], while the baselines again match the paper almost exactly ($\log p(x)$ 0.97, LogRank 0.98, Entropy 0.37 in both). This is also the dataset where the paper's own margin was smallest (0.99 vs 0.98), so a 0.02--0.03 loss from the smaller mask filler is enough to reverse it; the two intervals overlap. On PubMedQA, the paper's domain-shift test (Fig.~4, 200 pairs), DetectGPT reaches 0.866 [0.830, 0.897], close to the paper's 0.84 and clearly above LogRank (0.78) and $\log p(x)$ (0.76). Our earlier pilot on the same data (GPT-2 small, T5-small, $k=10$) had the order reversed, DetectGPT 0.79 against LogRank 0.86, so the paper's settings are what restore its advantage. On WMT16 English (mGPT + mT5-large) DetectGPT reaches 0.971 [0.955, 0.984] against LogRank 0.91, while the RoBERTa detectors drop to 0.55--0.58. On German, DetectGPT reaches 0.943 [0.919, 0.965] (paper 0.96) and RoBERTa-base falls to chance (0.50; paper 0.39), as the paper reports; here LogRank (0.94) is as good as DetectGPT. Table~\ref{tab:shift} summarises these domain-shift results, which reproduce the paper's point that supervised detectors fail outside their training domain while DetectGPT does not. As in the paper, the supervised RoBERTa detectors do very well on GPT-2 news text, which is the domain they were trained on.
+
+\paragraph{How close, and why not closer.} DetectGPT lands 0.02--0.04 below the paper on XSum, SQuAD, WritingPrompts and WMT16-de (and matches it on PubMedQA), while the baselines, which use no perturbations, match the paper to within about 0.03 (Entropy on XSum 0.05). The gap is therefore in the perturbation step, and the evidence points to the smaller mask-filling model. (i) The paper's Fig.~7 shows AUROC rising steadily with mask-filler size, and T5-large is about a quarter of the size of T5-3B; a full mask-size ablation did not fit our compute budget, but the direction of the effect is documented by the authors. (ii) The number of perturbations matters a lot (Fig.~\ref{fig:pert}): on XSum AUROC rises from 0.77 ($k=1$) to 0.89 ($k=10$) and 0.96 ($k=100$), and every dataset follows the same shape as the paper's Fig.~8, still rising at $k=100$ on several of them. This also explains our pilot runs (Assignments 1--2), which used T5-small and $k=10$ and found DetectGPT \emph{below} LogRank on PubMedQA (0.79 vs 0.86); with the paper's settings the order is restored (0.87 vs 0.78). (iii) With $n=200$ the 95\% intervals are about $\pm0.02$, so part of the remaining gap is sampling noise. We found no sign of an error in the original work; the shortfall is what the paper's own ablations predict for a smaller mask filler.
 
 \paragraph{Where the method works and where it fails.} Looking at individual XSum errors (GPT-2 XL, $k=100$) shows a pattern. The human articles with the \emph{highest} DetectGPT scores are formulaic wire-style reports, for example an ONS labour-market release (``Unemployment fell to 1.69 million between January and March, down 2,000 from the previous quarter. The jobless rate remained at 5.1\%\ldots''). Such text is so predictable that almost any rewrite lowers its probability, just as for machine text. The machine passages DetectGPT \emph{misses} are GPT-2 continuations that drift into implausible content (an art broker who ``did not approve of nudity'' promoting a nude painting). They already have low log-probability ($-2.99$ per token, against a median of $-2.19$ for machine passages), so rewrites cannot lower it much. DetectGPT therefore detects text that is \emph{typical} for the model; fluent but formulaic human prose is its main source of false positives. We also checked the paper's suggestion (Fig.~9) that a threshold of about $d=0.1$ separates the classes across domains. On XSum half of the human articles exceed 0.1 (median 0.10, machine 0.21), so the ranking is good but this fixed threshold does not transfer to our setup (Section~\ref{sec:results} shows the same on student essays).
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{figures/fig_perturbations.pdf}\\[2pt]
-\includegraphics[width=\columnwidth]{figures/fig_mask_ablation.pdf}
-\caption{Top: DetectGPT (z) AUROC against the number of perturbations $k$. Bottom: XSum AUROC ($k=100$) by mask-filling model. Error bars are 95\% bootstrap intervals.}
+\includegraphics[width=\columnwidth]{figures/fig_perturbations.pdf}
+\caption{DetectGPT (z) AUROC against the number of perturbations $k$ ($n=200$). Error bars are 95\% bootstrap intervals.}
 \label{fig:pert}
 \end{figure}
 
@@ -143,7 +160,7 @@ The result is 600 pairs (1{,}200 texts) over 10 prompts, released as one long-fo
 \toprule
 Dataset & pairs & words & machine text \\
 \midrule
-Kaggle LLM-Detect & 1{,}375 & \todo{} & GPT-2 XL (white-box) \\
+Kaggle LLM-Detect & 1{,}375 & 164 & GPT-2 XL (white-box) \\
 HC3 & 810 & 158 & ChatGPT (black-box) \\
 PERSUADE + Qwen & 300 & 242 & Qwen2.5-1.5B-Inst. \\
 PERSUADE + SmolLM2 & 300 & 242 & SmolLM2-1.7B-Inst. \\
@@ -153,37 +170,44 @@ PERSUADE + SmolLM2 & 300 & 242 & SmolLM2-1.7B-Inst. \\
 \label{tab:newdata}
 \end{table}
 
-\paragraph{Annotation and agreement.} The labels come from construction, so no annotation is needed to create the data. Annotation enters at two points. First, the expert holistic scores shipped with PERSUADE act as gold quality labels for the human essays. Second, two LLM judges from different model families score every text (Section~\ref{sec:results}), and we report their agreement with each other (Cohen's $\kappa$) and, for quality, with the expert scores (quadratic weighted $\kappa$). \todo{human annotation of 40 blind items if done}.
+\paragraph{Annotation and agreement.} The human/machine labels come from construction, so the data need no annotation to be usable. Annotation enters as a check on quality, at two points. (i) PERSUADE ships with expert holistic scores (1--6) for every student essay; these are gold quality labels, and our sample has a realistic spread (scores 1--6: 5, 37, 59, 60, 31 and 8 of the 200 evaluated Qwen pairs). (ii) Two LLM judges from different model families rated the quality of all 800 evaluated PERSUADE essays (200 pairs per generator) on the same 1--6 scale. They agree well with each other (quadratic weighted $\kappa=0.73$ on both PERSUADE subsets) and moderately with the experts on the human essays (Spearman 0.26--0.47, weighted $\kappa$ 0.17--0.36), and both rate the machine essays as at least as good as the student essays (Section~\ref{sec:results}).
 
 %=====================================================================
 \section{Results on New Data}
 \label{sec:results}
-All new-data runs use the replication configuration (GPT-2 XL scorer, T5-large, $k=100$, $n=200$). Where the machine text was not written by GPT-2 XL, GPT-2 XL acts as a surrogate scorer; for the two PERSUADE subsets we also score with the generator itself (\emph{white-box}), reusing the same cached perturbations. Table~\ref{tab:newresults} gives the results.
+All new-data runs use the replication configuration (GPT-2 XL scorer, T5-large, $k=100$, $n=200$). Where the machine text was not written by GPT-2 XL (HC3, PERSUADE), GPT-2 XL acts as a surrogate scorer. Table~\ref{tab:newresults} gives the results.
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering\small
-\begin{tabular}{lcccccc}
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{lcccc}
 \toprule
- & Kaggle & HC3 & \multicolumn{2}{c}{PERSUADE + Qwen} & \multicolumn{2}{c}{PERSUADE + SmolLM2} \\
-Scoring model & GPT-2 XL & GPT-2 XL & GPT-2 XL & Qwen (white-box) & GPT-2 XL & SmolLM2 (white-box) \\
+ & Kaggle & HC3 & \multicolumn{2}{c}{PERSUADE +} \\
+ &  &  & Qwen & SmolLM2 \\
 \midrule
-$\log p(x)$  & \todo{} & \todo{} & 0.82 & \todo{} & \todo{} & \todo{} \\
-Rank         & \todo{} & \todo{} & 0.86 & \todo{} & \todo{} & \todo{} \\
-LogRank      & \todo{} & \todo{} & 0.80 & \todo{} & \todo{} & \todo{} \\
-Entropy      & \todo{} & \todo{} & 0.21 & \todo{} & \todo{} & \todo{} \\
-DetectGPT ($k=100$) & \todo{} & \todo{} & \textbf{0.98} & \todo{} & \todo{} & \todo{} \\
+$\log p(x)$  & 0.96 & 0.99 & 0.82 & 1.00 \\
+Rank         & 0.91 & 0.90 & 0.86 & 0.96 \\
+LogRank      & 0.97 & \textbf{0.99} & 0.80 & 1.00 \\
+Entropy      & 0.39 & 0.09 & 0.21 & 0.07 \\
+DetectGPT    & \textbf{1.00} & 0.93 & \textbf{0.98} & 1.00 \\
+\quad TPR @ 1\% FPR & 0.97 & 0.12 & 0.73 & 0.93 \\
 \midrule
-RoBERTa-base  & \todo{} & \todo{} & 0.50 & -- & \todo{} & -- \\
-RoBERTa-large & \todo{} & \todo{} & 0.51 & -- & \todo{} & -- \\
-LLM judge: Qwen2.5-3B & -- & 0.42 & \multicolumn{2}{c}{0.30} & \multicolumn{2}{c}{0.36} \\
-LLM judge: Phi-3.5-mini & -- & 0.39 & \multicolumn{2}{c}{0.33} & \multicolumn{2}{c}{0.31} \\
+RoBERTa-base  & 0.97 & 0.98 & 0.50 & 0.99 \\
+RoBERTa-large & 0.99 & 0.96 & 0.51 & 0.99 \\
+\midrule
+Judge: Qwen2.5-3B   & -- & 0.42 & 0.30 & 0.36 \\
+Judge: Phi-3.5-mini & -- & 0.39 & 0.33 & 0.31 \\
 \bottomrule
 \end{tabular}
-\caption{AUROC on the new data ($n=200$ pairs each). The supervised and LLM-judge detectors do not use a scoring model. Replication numbers for comparison: DetectGPT 0.96 on XSum.}
+\caption{AUROC on the new data ($n=200$ pairs each; GPT-2 XL scoring model, T5-large, $k=100$). The supervised detectors and LLM judges use no scoring model. Machine text: Kaggle, GPT-2 XL continuations; HC3, ChatGPT; PERSUADE, Qwen2.5-1.5B or SmolLM2-1.7B essays.}
 \label{tab:newresults}
-\end{table*}
+\end{table}
 
-\paragraph{DetectGPT on student essays.} On the PERSUADE + Qwen essays DetectGPT reaches 0.978, \emph{higher} than on any replication dataset, even though GPT-2 XL did not write these essays. The zero-shot baselines lose much more ground (LogRank 0.80 vs 0.91 on XSum), and the supervised RoBERTa detectors, which are near-perfect on GPT-2 news, fall to chance (0.50/0.51). This is the paper's domain-shift result in a sharper form: a detector trained on one generator's output does not carry over to a modern instruction-tuned model writing in a different genre, while the curvature test does. \todo{SmolLM2, white-box vs surrogate, Kaggle, HC3}.
+\paragraph{DetectGPT on student essays.} On the PERSUADE + Qwen essays DetectGPT reaches 0.978, \emph{higher} than on any replication dataset, even though GPT-2 XL did not write these essays. The zero-shot baselines lose much more ground (LogRank 0.80 vs 0.91 on XSum), and the supervised RoBERTa detectors, which are near-perfect on GPT-2 news, fall to chance (0.50/0.51). This is the paper's domain-shift result in a sharper form: a detector trained on one generator's output does not carry over to a modern instruction-tuned model writing in a different genre, while the curvature test does. The SmolLM2 essays are different: every method separates them almost perfectly (DetectGPT 0.998, $\log p(x)$ 0.999, RoBERTa 0.99), because, like ChatGPT in HC3, SmolLM2 writes highly predictable text. Which model wrote the essays therefore matters as much as the detector, and the Qwen subset, where fluent but less predictable text meets fluent students, is the informative test.
+
+On Kaggle, where the paper's own protocol is applied to student essays (GPT-2 XL continues each essay and also scores it), DetectGPT reaches 0.996 [0.991, 0.999] against LogRank 0.971, and catches 97\% of machine essays at 1\% FPR (LogRank 71\%). So the method transfers to the student-essay domain when the conditions of the paper hold.
+
+\paragraph{Where DetectGPT is not the best: HC3.} On HC3 the simple statistics win: $\log p(x)$ 0.992 and LogRank 0.993, against 0.932 [0.905, 0.955] for DetectGPT, which also catches only 12\% of ChatGPT answers at 1\% FPR (LogRank 92\%). We expected this to come from the informal Reddit and forum answers on the human side, but it holds in every domain, including the formal Wikipedia answers in \texttt{wiki\_csai} ($\log p(x)$ 0.98, DetectGPT 0.90). The reason is the generator: ChatGPT's answers are extremely predictable for GPT-2 XL (mean log-probability $-1.6$ per token, against $-2.6$ to $-3.4$ for the human answers in each domain), so the absolute likelihood alone separates the classes. DetectGPT normalises this level away and only measures local curvature, and with a surrogate scorer that curvature signal is weaker. HC3 and PERSUADE therefore point in opposite directions: likelihood wins when a heavily aligned chat model writes conservatively, while curvature wins when the generator samples more freely (temperature 0.8) and the human side includes fluent writers. A practical detector should combine both kinds of evidence.
 
 \paragraph{Is it just spotting weak writing?} Student essays have spelling and grammar errors that make them less probable under any language model, so a high AUROC could simply mean that poor writing is easy to tell apart from fluent text. The expert scores let us test this (Fig.~\ref{fig:quality}): we compare all 200 machine essays with only the weakest human essays (score $\le$2, $n=42$) or only the strongest (score $\ge$4, $n=99$). LogRank falls from 0.94 to 0.75 and $\log p(x)$ from 0.96 to 0.77, so these baselines mostly separate \emph{poor} writing from machine text. DetectGPT stays at 1.00 and 0.97. Because it compares a text with rewrites of itself, a fluent student essay is not flagged just for being fluent, and that is the property that matters most for academic integrity.
 
@@ -213,11 +237,15 @@ As detectors both judges fail, and in an informative way (Table~\ref{tab:newresu
 \emph{Human data.} PERSUADE essays were written by school students, many of them minors. They were collected with consent by the corpus creators, released de-identified under CC BY-NC-SA 4.0, and we use them only for non-commercial research. Our release keeps the licence and attribution, and we deliberately leave out all demographic fields (data minimisation). Using existing, non-identifiable data is normally negligible-risk research under the \textit{National Statement} \citep{nhmrc2023national}, but a publication would still need an ethics determination from the university's HREC. Kaggle's competition data may not be redistributed, so we publish the scripts that rebuild that part rather than the text. HC3 is released under CC BY-SA.
 \emph{Fairness.} The most important open question is whether DetectGPT's false positives fall disproportionately on English-language learners or students with disabilities. PERSUADE records these attributes, so the question can be answered, but only with ethics approval and care not to stigmatise those groups; we did not do this analysis here.
 \emph{Harm from use.} Even at AUROC 0.98, a threshold that falsely flags 1 in 100 genuine essays still misses about a quarter of machine essays (Section~\ref{sec:results}), and over a cohort of thousands that is many false accusations. A detector score should therefore never be the sole evidence in a misconduct case. The LLM judges are worse still and not suitable for such decisions.
-\emph{Transparency and open access.} All code, prompts, decoding settings, random seeds and per-run logs are public, and the generated essays are labelled as machine text so they cannot be passed off as student work. Both generators are released under the Apache-2.0 licence. Running every experiment took about \todo{N} GPU-hours on a laptop. Generative AI tools were used for coding assistance and drafting; all outputs were checked by the author, who takes responsibility for the content.
+\emph{Transparency and open access.} All code, prompts, decoding settings, random seeds and per-run logs are public, and the generated essays are labelled as machine text so they cannot be passed off as student work. Both generators are released under the Apache-2.0 licence. The final experiments took about 36 hours of laptop GPU time (RTX 4060, about 80\,W), a small energy cost that the perturbation cache kept from growing further. Generative AI tools were used for coding assistance and drafting; all outputs were checked by the author, who takes responsibility for the content.
 
 %=====================================================================
 \section{Conclusions and Reflections}
-\todo{after results}
+\paragraph{Replication.} DetectGPT replicates. With the authors' code, the original data and the paper's GPT-2 XL configuration, the zero-shot baselines land within about 0.05 of the published values, and DetectGPT beats them on XSum, SQuAD, PubMedQA and WMT16 English and ties LogRank on WMT16 German, reaching 0.95--0.97 on the main datasets against the paper's 0.99. The remaining gap is consistent with what the paper's own ablations predict for a smaller mask filler, and our perturbation-count experiment reproduces the paper's Fig.~8 on every dataset. The one reversal, WritingPrompts, is the dataset where the paper's margin was only 0.01. On the multilingual WMT16 data the result also holds with a substituted mask filler (mT5-large for mT5-XL). Compute was the binding constraint: T5-3B does not run usefully in 8\,GB, and even with batching and caching a 200-pair run took 1.5--4 hours.
+
+\paragraph{Generalisation.} The central claim, that curvature identifies machine text without training data, carries over to student writing. On our new PERSUADE essays DetectGPT reaches 0.98 with a surrogate scorer, and, unlike every likelihood baseline, it does not rely on the student essays being poorly written; the supervised RoBERTa detector falls to chance. The claim does not hold universally: on HC3, ChatGPT's answers are so predictable that plain likelihood outperforms DetectGPT, and the paper's suggestion of a domain-independent threshold does not transfer. Small LLM judges were not usable as detectors (below-chance AUROC, strong answer-position bias) but were consistent as quality raters.
+
+\paragraph{Reflections.} Three lessons for a similar project. First, for long GPU experiments on a personal laptop, robustness matters as much as speed: our first overnight run was lost to a Windows Update restart and several later runs to standby, which is why the final code checkpoints perturbations per text and resumes. Second, the expert scores in PERSUADE turned out to be the most useful part of the new data, because they made it possible to test \emph{why} a detector works rather than only how well. In hindsight, building the constructed dataset on a corpus with such metadata from the start would have been better than our Assignment~2 pilot on two Kaggle prompts. Third, the generator matters more than we expected: a second generator family and a black-box chat model (HC3) changed which method wins, so conclusions from a single generator should be treated with caution.
 
 \bibliography{references}
 
