@@ -11,3 +11,15 @@ new_persuade_qwen_scorer_gpt2xl_n200,log p(x),score>=4,99,0.771540404040404
 new_persuade_qwen_scorer_gpt2xl_n200,RoBERTa-large,all,200,0.5124
 new_persuade_qwen_scorer_gpt2xl_n200,RoBERTa-large,score<=2,42,0.4772619047619047
 new_persuade_qwen_scorer_gpt2xl_n200,RoBERTa-large,score>=4,99,0.536969696969697
+new_persuade_smol_scorer_gpt2xl_n200,DetectGPT-z (100),all,200,0.9981249999999999
+new_persuade_smol_scorer_gpt2xl_n200,DetectGPT-z (100),score<=2,43,0.9959302325581396
+new_persuade_smol_scorer_gpt2xl_n200,DetectGPT-z (100),score>=4,92,0.9981521739130436
+new_persuade_smol_scorer_gpt2xl_n200,LogRank,all,200,0.99865
+new_persuade_smol_scorer_gpt2xl_n200,LogRank,score<=2,43,0.9998837209302325
+new_persuade_smol_scorer_gpt2xl_n200,LogRank,score>=4,92,0.9977173913043478
+new_persuade_smol_scorer_gpt2xl_n200,log p(x),all,200,0.9991875
+new_persuade_smol_scorer_gpt2xl_n200,log p(x),score<=2,43,1.0
+new_persuade_smol_scorer_gpt2xl_n200,log p(x),score>=4,92,0.9985054347826088
+new_persuade_smol_scorer_gpt2xl_n200,RoBERTa-large,all,200,0.9845249999999999
+new_persuade_smol_scorer_gpt2xl_n200,RoBERTa-large,score<=2,43,0.9944186046511627
+new_persuade_smol_scorer_gpt2xl_n200,RoBERTa-large,score>=4,92,0.971304347826087

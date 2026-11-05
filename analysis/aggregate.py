@@ -39,7 +39,7 @@ PAPER_GPT2 = {
 }
 
 
-def boot_ci(real, samples, n_boot=2000, seed=0):
+def boot_ci(real, samples, n_boot=1000, seed=0):
     """95% percentile bootstrap CI of AUROC, resampling human and machine scores separately."""
     rng = np.random.default_rng(seed)
     real, samples = np.asarray(real, float), np.asarray(samples, float)
@@ -193,20 +193,22 @@ def figures(df, qt):
     import matplotlib.pyplot as plt
     plt.rcParams.update({"font.size": 7, "figure.dpi": 300, "axes.spines.top": False, "axes.spines.right": False})
     os.makedirs(FIG, exist_ok=True)
-    colors = {"xsum": "#2a6fb0", "squad": "#d9822b", "writing": "#3a9b5c", "pubmed": "#8a5ab0",
+    colors = {"xsum": "#2a6fb0", "squad": "#d9822b", "writing": "#3a9b5c", "pubmed": "#8a5ab0", "english": "#1b9e9e", "german": "#b5a40c",
               "persuade_paired_qwen2.5-1.5b": "#c0392b", "persuade_paired_smollm2-1.7b": "#7f8c8d"}
 
     # 1) AUROC vs number of perturbations
     fig, ax = plt.subplots(figsize=(3.0, 1.9))
-    for prefix in ["rep_xsum", "rep_squad", "rep_writing", "rep_pubmed", "new_persuade_qwen_scorer_gpt2xl",
-                   "new_persuade_smol_scorer_gpt2xl"]:
+    for prefix in ["rep_xsum", "rep_squad", "rep_writing", "rep_pubmed", "rep_english", "rep_german",
+                   "new_persuade_qwen_scorer_gpt2xl"]:
         d = best_run(df, prefix)
         d = d[d.method.str.startswith("DetectGPT-z")]
         if not len(d):
             continue
         d = d.assign(k=d.method.str.extract(r"\((\d+)\)")[0].astype(int)).sort_values("k")
         ds = d.dataset.iloc[0]
-        label = {"persuade_paired_qwen2.5-1.5b": "PERSUADE+Qwen", "persuade_paired_smollm2-1.7b": "PERSUADE+SmolLM2"}.get(ds, ds)
+        label = {"persuade_paired_qwen2.5-1.5b": "PERSUADE+Qwen", "persuade_paired_smollm2-1.7b": "PERSUADE+SmolLM2",
+                 "writing": "WritingPrompts", "english": "WMT16-en", "german": "WMT16-de", "xsum": "XSum", "squad": "SQuAD",
+                 "pubmed": "PubMedQA"}.get(ds, ds)
         ax.errorbar(d.k, d.auroc, yerr=[d.auroc - d.ci_low, d.ci_high - d.auroc], marker="o", ms=2.5, lw=1, capsize=1.5,
                     color=colors.get(ds), label=label, ls="--" if ds.startswith("persuade") else "-")
     ax.set_xscale("log"); ax.set_xticks([1, 10, 100]); ax.set_xticklabels(["1", "10", "100"])
@@ -229,7 +231,7 @@ def figures(df, qt):
 
     # 3) AUROC by human-essay quality (PERSUADE)
     if len(qt):
-        q = qt[qt.run.str.contains("scorer_gpt2xl")]
+        q = qt[qt.run.str.contains("qwen_scorer_gpt2xl")]
         fig, ax = plt.subplots(figsize=(3.0, 1.8))
         methods = ["DetectGPT-z (100)", "LogRank", "log p(x)", "RoBERTa-large"]
         subsets = ["score<=2", "all", "score>=4"]
