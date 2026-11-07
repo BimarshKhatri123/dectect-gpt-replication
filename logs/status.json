@@ -220,5 +220,29 @@
     "returncode": 0,
     "minutes": 148.3,
     "finished": "2026-11-05 15:24"
+  },
+  "abl_mask_t5-small_n100": {
+    "ok": true,
+    "returncode": 0,
+    "minutes": 26.6,
+    "finished": "2026-11-06 22:10"
+  },
+  "abl_mask_t5-base_n100": {
+    "ok": true,
+    "returncode": 0,
+    "minutes": 73.2,
+    "finished": "2026-11-06 23:23"
+  },
+  "new_persuade_qwen_scorer_qwen_n100": {
+    "ok": true,
+    "returncode": 0,
+    "minutes": 27.8,
+    "finished": "2026-11-06 23:51"
+  },
+  "new_persuade_smol_scorer_smol_n100": {
+    "ok": true,
+    "returncode": 0,
+    "minutes": 20.3,
+    "finished": "2026-11-07 00:11"
   }
 }

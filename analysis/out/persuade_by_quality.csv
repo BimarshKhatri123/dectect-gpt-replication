@@ -11,6 +11,18 @@ new_persuade_qwen_scorer_gpt2xl_n200,log p(x),score>=4,99,0.771540404040404
 new_persuade_qwen_scorer_gpt2xl_n200,RoBERTa-large,all,200,0.5124
 new_persuade_qwen_scorer_gpt2xl_n200,RoBERTa-large,score<=2,42,0.4772619047619047
 new_persuade_qwen_scorer_gpt2xl_n200,RoBERTa-large,score>=4,99,0.536969696969697
+new_persuade_qwen_scorer_qwen_n100,DetectGPT-z (100),all,100,1.0
+new_persuade_qwen_scorer_qwen_n100,DetectGPT-z (100),score<=2,24,1.0
+new_persuade_qwen_scorer_qwen_n100,DetectGPT-z (100),score>=4,51,1.0
+new_persuade_qwen_scorer_qwen_n100,LogRank,all,100,0.9903
+new_persuade_qwen_scorer_qwen_n100,LogRank,score<=2,24,0.9987499999999999
+new_persuade_qwen_scorer_qwen_n100,LogRank,score>=4,51,0.9886274509803921
+new_persuade_qwen_scorer_qwen_n100,log p(x),all,100,0.9924
+new_persuade_qwen_scorer_qwen_n100,log p(x),score<=2,24,0.9991666666666666
+new_persuade_qwen_scorer_qwen_n100,log p(x),score>=4,51,0.9909803921568627
+new_persuade_qwen_scorer_qwen_n100,RoBERTa-large,all,100,0.5097
+new_persuade_qwen_scorer_qwen_n100,RoBERTa-large,score<=2,24,0.5266666666666666
+new_persuade_qwen_scorer_qwen_n100,RoBERTa-large,score>=4,51,0.5245098039215687
 new_persuade_smol_scorer_gpt2xl_n200,DetectGPT-z (100),all,200,0.9981249999999999
 new_persuade_smol_scorer_gpt2xl_n200,DetectGPT-z (100),score<=2,43,0.9959302325581396
 new_persuade_smol_scorer_gpt2xl_n200,DetectGPT-z (100),score>=4,92,0.9981521739130436
@@ -23,3 +35,15 @@ new_persuade_smol_scorer_gpt2xl_n200,log p(x),score>=4,92,0.9985054347826088
 new_persuade_smol_scorer_gpt2xl_n200,RoBERTa-large,all,200,0.9845249999999999
 new_persuade_smol_scorer_gpt2xl_n200,RoBERTa-large,score<=2,43,0.9944186046511627
 new_persuade_smol_scorer_gpt2xl_n200,RoBERTa-large,score>=4,92,0.971304347826087
+new_persuade_smol_scorer_smol_n100,DetectGPT-z (100),all,100,0.9996999999999999
+new_persuade_smol_scorer_smol_n100,DetectGPT-z (100),score<=2,23,0.9995652173913043
+new_persuade_smol_scorer_smol_n100,DetectGPT-z (100),score>=4,43,0.9997674418604651
+new_persuade_smol_scorer_smol_n100,LogRank,all,100,0.9991
+new_persuade_smol_scorer_smol_n100,LogRank,score<=2,23,1.0
+new_persuade_smol_scorer_smol_n100,LogRank,score>=4,43,0.9983720930232558
+new_persuade_smol_scorer_smol_n100,log p(x),all,100,0.9995999999999999
+new_persuade_smol_scorer_smol_n100,log p(x),score<=2,23,1.0
+new_persuade_smol_scorer_smol_n100,log p(x),score>=4,43,0.9993023255813953
+new_persuade_smol_scorer_smol_n100,RoBERTa-large,all,100,0.9816
+new_persuade_smol_scorer_smol_n100,RoBERTa-large,score<=2,23,0.9947826086956522
+new_persuade_smol_scorer_smol_n100,RoBERTa-large,score>=4,43,0.9658139534883721

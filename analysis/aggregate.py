@@ -220,13 +220,17 @@ def figures(df, qt):
     if len(abl) > 1:
         size = {"t5-small": 60, "t5-base": 220, "t5-large": 770, "t5-3b": 2850}
         abl = abl.assign(params=abl.mask_model.map(size)).sort_values(["params", "n"]).drop_duplicates("params", keep="first")
-        fig, ax = plt.subplots(figsize=(3.0, 1.7))
+        fig, ax = plt.subplots(figsize=(3.0, 1.75))
         ax.errorbar(abl.params, abl.auroc, yerr=[abl.auroc - abl.ci_low, abl.ci_high - abl.auroc], marker="o", ms=3,
-                    capsize=1.5, color="#2a6fb0", lw=1)
-        for _, r in abl.iterrows():
-            ax.annotate(f"{r.mask_model} (n={r.n})", (r.params, r.auroc), textcoords="offset points", xytext=(4, -8), fontsize=5.5)
-        ax.axhline(0.99, color="grey", lw=.7, ls=":"); ax.text(70, 0.985, "paper (T5-3B)", fontsize=5.5, color="grey", va="top")
-        ax.set_xscale("log"); ax.set_xlabel("mask-filling model parameters (M)"); ax.set_ylabel("AUROC (XSum)")
+                    capsize=1.5, color="#2a6fb0", lw=1, label="ours (GPT-2 XL, $k$=100, $n$=100)")
+        ax.plot([2850], [0.99], marker="s", ms=4, mfc="white", color="grey", ls="none", label="paper (T5-3B)")
+        lr = df[(df.run == "rep_xsum") & (df.method == "LogRank")].auroc
+        if len(lr):
+            ax.axhline(lr.iloc[0], color="#d9822b", lw=.8, ls="--", label="LogRank baseline")
+        ax.set_xscale("log"); ax.minorticks_off()
+        ax.set_xticks([60, 220, 770, 2850]); ax.set_xticklabels(["T5-small", "T5-base", "T5-large", "T5-3B"])
+        ax.set_xlabel("mask-filling model"); ax.set_ylabel("AUROC (XSum)"); ax.set_ylim(0.55, 1.02)
+        ax.legend(frameon=False, fontsize=5.5, loc="lower right")
         fig.tight_layout(); fig.savefig(f"{FIG}/fig_mask_ablation.pdf"); plt.close(fig)
 
     # 3) AUROC by human-essay quality (PERSUADE)
