@@ -58,7 +58,7 @@ External data that cannot be redistributed here:
 
 ```bash
 python experiments/run_suite.py --list            # show every command
-python experiments/run_suite.py --suite all       # everything in the report (~36 GPU-hours on an RTX 4060 Laptop)
+python experiments/run_suite.py --suite all       # everything in the report (~39 GPU-hours on an RTX 4060 Laptop; per-run times in Appendix B of the report)
 python analysis/aggregate.py                      # tables -> analysis/out/, figures -> report/figures/
 ```
 

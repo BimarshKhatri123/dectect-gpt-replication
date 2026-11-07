@@ -107,6 +107,7 @@ RoBERTa-large & 1.00 & -- & 0.99 & -- & 0.99 & -- \\
 \begin{table}[t]
 \centering\small
 \setlength{\tabcolsep}{3.5pt}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lccc}
 \toprule
  & PubMedQA & WMT16-en & WMT16-de \\
@@ -118,6 +119,7 @@ DetectGPT (ours)      & \textbf{0.87} & \textbf{0.97} & \textbf{0.94} \\
 \quad paper (Fig.~4)  & 0.84 & -- & 0.96 \\
 \bottomrule
 \end{tabular}
+}
 \caption{Domain-shift datasets ($n=200$, $k=100$). PubMedQA: GPT-2 XL + T5-large; WMT16: mGPT + mT5-large (paper: mT5-XL). Paper values are from Fig.~4 where an exact value can be read; WMT16-en is shown there only as a bar.}
 \label{tab:shift}
 \end{table}
@@ -157,6 +159,7 @@ The human half reuses real student writing, as every detection dataset must (inc
 \begin{table}[t]
 \centering\small
 \setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lrrl}
 \toprule
 Dataset & pairs & words & machine text \\
@@ -167,6 +170,7 @@ PERSUADE + Qwen & 300 & 242 & Qwen2.5-1.5B-Inst. \\
 PERSUADE + SmolLM2 & 300 & 242 & SmolLM2-1.7B-Inst. \\
 \bottomrule
 \end{tabular}
+}
 \caption{New datasets. ``Pairs'' is the number available; each experiment uses the first 200. ``Words'' is the mean length after pairing and truncation.}
 \label{tab:newdata}
 \end{table}
@@ -240,7 +244,7 @@ As detectors both judges fail, and in an informative way (Table~\ref{tab:newresu
 \emph{Human data.} PERSUADE essays were written by school students, many of them minors. They were collected with consent by the corpus creators, released de-identified under CC BY-NC-SA 4.0, and we use them only for non-commercial research. Our release keeps the licence and attribution, and we deliberately leave out all demographic fields (data minimisation). Using existing, non-identifiable data is normally negligible-risk research under the \textit{National Statement} \citep{nhmrc2023national}, but a publication would still need an ethics determination from the university's HREC. Kaggle's competition data may not be redistributed, so we publish the scripts that rebuild that part rather than the text. HC3 is released under CC BY-SA.
 \emph{Fairness.} The most important open question is whether DetectGPT's false positives fall disproportionately on English-language learners or students with disabilities. PERSUADE records these attributes, so the question can be answered, but only with ethics approval and care not to stigmatise those groups; we did not do this analysis here.
 \emph{Harm from use.} Even at AUROC 0.98, a threshold that falsely flags 1 in 100 genuine essays still misses about a quarter of machine essays (Section~\ref{sec:results}), and over a cohort of thousands that is many false accusations. A detector score should therefore never be the sole evidence in a misconduct case. The LLM judges are worse still and not suitable for such decisions.
-\emph{Transparency and open access.} All code, prompts, decoding settings, random seeds and per-run logs are public, and the generated essays are labelled as machine text so they cannot be passed off as student work. Both generators are released under the Apache-2.0 licence. The final experiments took about 36 hours of laptop GPU time (RTX 4060, about 80\,W), a small energy cost that the perturbation cache kept from growing further. Generative AI tools were used for coding assistance and drafting; all outputs were checked by the author, who takes responsibility for the content.
+\emph{Transparency and open access.} All code, prompts, decoding settings, random seeds and per-run logs are public, and the generated essays are labelled as machine text so they cannot be passed off as student work. Both generators are released under the Apache-2.0 licence. The final experiments took about 39 hours of laptop GPU time (RTX 4060, about 80\,W; per-run times in Appendix~\ref{app:compute}), a small energy cost that the perturbation cache kept from growing further. Generative AI tools were used for coding assistance and drafting; all outputs were checked by the author, who takes responsibility for the content.
 
 %=====================================================================
 \section{Conclusions and Reflections}
@@ -256,26 +260,65 @@ As detectors both judges fail, and in an informative way (Table~\ref{tab:newresu
 \section{Reproducing the Results}
 \label{app:repro}
 All experiments are defined in \texttt{experiments/run\_suite.py}; the repository README lists the setup and the external downloads (WritingPrompts, Kaggle and PERSUADE cannot be redistributed in full).
-{\small
+{\footnotesize
 \begin{verbatim}
 pip install -r requirements.txt
-python experiments/prefetch.py --cache_dir ../cache
-python experiments/run_suite.py --suite all
+python experiments/prefetch.py \
+  --cache_dir ../cache
+python experiments/run_suite.py \
+  --suite all
 python analysis/aggregate.py
 \end{verbatim}}
 \noindent A single replication run, for example XSum, is
-{\small
+{\footnotesize
 \begin{verbatim}
-python run.py --dataset xsum --dataset_key document
-  --n_samples 200 --n_perturbation_list 1,10,100
-  --base_model_name gpt2-xl
-  --mask_filling_model_name t5-large
-  --pct_words_masked 0.3 --span_length 2
-  --base_half --ll_batch_size 8
-  --reuse_perturbations
-  --perturbation_cache perturbation_cache
+python run.py --dataset xsum \
+  --dataset_key document \
+  --n_samples 200 \
+  --n_perturbation_list 1,10,100 \
+  --base_model_name gpt2-xl \
+  --mask_filling_model_name t5-large \
+  --pct_words_masked 0.3 \
+  --span_length 2 \
+  --base_half --ll_batch_size 8 \
+  --reuse_perturbations \
+  --perturbation_cache \
+    perturbation_cache
 \end{verbatim}}
 \noindent Each run writes its arguments, predictions, AUROC/PR-AUC, ROC curves and run time to \texttt{results/final/<run>/}; \texttt{analysis/aggregate.py} computes the bootstrap intervals, TPR at fixed FPR, the quality-stratified AUROC, the judge tables and all figures from these files.
+
+\section{Compute Used}
+\label{app:compute}
+No model was trained: every model is used pre-trained, so the time below is spent generating machine text, perturbing texts with T5 and scoring them. Times are wall-clock minutes on the RTX~4060 Laptop GPU (8\,GB), taken from \texttt{logs/status.json}; some include pauses when the laptop throttled or entered standby (most visibly SQuAD and HC3). Larger runs reused the cached perturbations of smaller ones (e.g.\ the 200-pair XSum run reused the 100-pair run).
+
+\noindent\resizebox{\columnwidth}{!}{%
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llr}
+\toprule
+Run & Models (scorer / mask filler) & min \\
+\midrule
+\multicolumn{3}{l}{\emph{Replication, $k\in\{1,10,100\}$}}\\
+XSum, 100 + 200 pairs & GPT-2 XL / T5-large & 60 + 72 \\
+SQuAD, 100 + 200 pairs & GPT-2 XL / T5-large & 56 + 436 \\
+WritingPrompts, 200 & GPT-2 XL / T5-large & 92 \\
+PubMedQA, 200 & GPT-2 XL / T5-large & 252 \\
+WMT16-en, 200 & mGPT / mT5-large & 143 \\
+WMT16-de, 200 & mGPT / mT5-large & 148 \\
+Ablation XSum, 100 & GPT-2 XL / T5-small & 27 \\
+Ablation XSum, 100 & GPT-2 XL / T5-base & 73 \\
+\midrule
+\multicolumn{3}{l}{\emph{New data}}\\
+Generate essays & Qwen2.5-1.5B; SmolLM2-1.7B & 9; 18 \\
+Kaggle, 200 & GPT-2 XL / T5-large & 121 \\
+HC3, 200 & GPT-2 XL / T5-large & 379 \\
+PERSUADE+Qwen, 200 & GPT-2 XL / T5-large & 207 \\
+PERSUADE+SmolLM2, 200 & GPT-2 XL / T5-large & 176 \\
+White-box, 100 each & Qwen; SmolLM2 / cached & 28; 20 \\
+LLM judges (6 runs) & Qwen2.5-3B; Phi-3.5-mini & 28 \\
+\midrule
+\textbf{Total} & & \textbf{2{,}345} ($\approx$39\,h) \\
+\bottomrule
+\end{tabular}}
 
 \section{Generation Prompt}
 \label{app:prompt}
