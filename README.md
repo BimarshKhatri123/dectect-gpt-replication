@@ -11,7 +11,7 @@ This repository is a fork of the official DetectGPT code
    student/LLM essay pairs** built from the PERSUADE 2.0 corpus with Qwen2.5-1.5B-Instruct and SmolLM2-1.7B-Instruct.
 3. **LLM-as-judge**: Qwen2.5-3B-Instruct and Phi-3.5-mini-instruct used as zero-shot detectors and as essay-quality raters.
 
-The report is in [`report/main.pdf`](report/main.pdf) (ACL format, LaTeX source in `report/`).
+The final report is [`report/main.pdf`](report/main.pdf) (ACL template, compiled in Overleaf; LaTeX source in `report/`).
 
 ## Repository layout
 
